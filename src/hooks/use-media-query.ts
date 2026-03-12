@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useState } from "react";
+import { useIsomorphicLayoutEffect } from "./use-isomoprhic-layout-effect";
 
 const IS_SERVER = typeof window === 'undefined';
 
@@ -10,7 +11,7 @@ export function useMediaQuery(query: string, fallback: boolean = false) {
     const [matches, setMatches] = useState(getMatches(query));
     const handleChange = () => setMatches(getMatches(query));
 
-    (IS_SERVER ? useEffect : useLayoutEffect)(() => {
+    useIsomorphicLayoutEffect(() => {
         const media = window.matchMedia(query);
         handleChange();
 

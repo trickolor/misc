@@ -1,5 +1,5 @@
 import { useLocalStorage } from "./use-local-storage";
-import { useMediaQuery } from "./use-meida-query";
+import { useMediaQuery } from "./use-media-query";
 
 const LOCAL_STORAGE_KEY = 'dark-mode';
 const QUERY = '(prefers-color-scheme: dark)';

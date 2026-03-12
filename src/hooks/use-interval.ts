@@ -1,11 +1,10 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
-
-const IS_SERVER = typeof window === 'undefined';
+import { useEffect, useRef } from 'react';
+import { useIsomorphicLayoutEffect } from "./use-isomoprhic-layout-effect";
 
 export function useInterval(callback: () => void, delay?: number | null) {
     const callbackRef = useRef(callback);
 
-    (IS_SERVER ? useEffect : useLayoutEffect)(() => {
+    useIsomorphicLayoutEffect(() => {
         callbackRef.current = callback;
     });
 

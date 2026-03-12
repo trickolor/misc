@@ -1,6 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
-
-const IS_SERVER = typeof window === 'undefined';
+import { useEffect, useRef, type RefObject } from "react";
+import { useIsomorphicLayoutEffect } from "./use-isomoprhic-layout-effect";
 
 interface WithEventListenerOptions {
     eventListenerOptions?: boolean | AddEventListenerOptions;
@@ -63,7 +62,7 @@ export function useEventListener({
 }: OptionsImpl) {
     const savedHandler = useRef<(event: Event) => void>(handler);
 
-    (IS_SERVER ? useEffect : useLayoutEffect)(() => {
+    useIsomorphicLayoutEffect(() => {
         savedHandler.current = handler;
     }, [handler]);
 

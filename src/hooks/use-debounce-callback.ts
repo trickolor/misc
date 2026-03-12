@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
-
-const IS_SERVER = typeof window === 'undefined';
+import { useCallback, useEffect, useRef } from "react";
+import { useIsomorphicLayoutEffect } from "./use-isomoprhic-layout-effect";
 
 interface Options {
     leading?: boolean;
@@ -30,7 +29,7 @@ export function useDebounceCallback<T extends (...args: any[]) => any>(
 
     const leadingCalledRef = useRef(false);
 
-    (IS_SERVER ? useEffect : useLayoutEffect)(() => {
+    useIsomorphicLayoutEffect(() => {
         fnRef.current = fn;
     });
 

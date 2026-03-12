@@ -1,9 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { useRef, useState, type RefObject } from "react";
+import { useIsomorphicLayoutEffect } from "./use-isomoprhic-layout-effect";
 
 type Target = HTMLElement | string | RefObject<HTMLElement | string | null> | null;
 type Axis = "x" | "y" | "both";
-
-const IS_SERVER = typeof window === 'undefined';
 
 type TargetStyleRules = "overflowX" | "overflowY" | "paddingBottom" | "paddingRight";
 type OriginalStyles = Partial<Pick<CSSStyleDeclaration, TargetStyleRules>>;
@@ -92,8 +91,7 @@ export function useScrollLock(options?: Options) {
 
     const toggle = () => (isLocked ? unlock : lock)();
 
-    (IS_SERVER ? useEffect : useLayoutEffect)(() => {
-        if (IS_SERVER) return;
+    useIsomorphicLayoutEffect(() => {
 
         if (target) {
             const isSelector = typeof target === 'string';
