@@ -29,7 +29,7 @@ export function useScreen(debounceDelay?: number) {
 
     const debouncedHandleResize = useDebounceCallback(handleResize, debounceDelay ?? null);
 
-    useEventListener({ event: 'resize', handler: debounceDelay ? debouncedHandleResize : handleResize });
+    useEventListener({ event: 'resize', handler: debounceDelay ? () => debouncedHandleResize.call() : handleResize });
 
     return screen;
 }

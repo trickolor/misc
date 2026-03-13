@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface State {
     isIntersecting: boolean;
@@ -36,10 +36,12 @@ export function useIntersectionObserver({
 
     const frozen = state.entry?.isIntersecting && freezeOnceVisible;
 
-    const thresholdMemo = useMemo(
-        () => threshold,
-        [JSON.stringify(threshold)]
-    );
+    const thresholdKey = JSON.stringify(threshold);
+    const thresholdRef = useRef(threshold);
+
+    useEffect(() => {
+        thresholdRef.current = threshold;
+    }, [thresholdKey, threshold]);
 
     useEffect(() => {
         if (!ref) return;
@@ -51,7 +53,7 @@ export function useIntersectionObserver({
         const observer = new IntersectionObserver(entries => {
             const thresholds = Array.isArray(observer.thresholds)
                 ? observer.thresholds
-                : [thresholdMemo as number];
+                : [thresholdRef.current];
 
             entries.forEach(entry => {
                 const isIntersecting =
@@ -67,12 +69,12 @@ export function useIntersectionObserver({
                     unobserve = null;
                 }
             });
-        }, { root, rootMargin, threshold: thresholdMemo });
+        }, { root, rootMargin, threshold: thresholdRef.current });
 
         observer.observe(ref);
         unobserve = () => observer.unobserve(ref);
         return () => observer.disconnect();
-    }, [ref, thresholdMemo, root, rootMargin, frozen, freezeOnceVisible]);
+    }, [ref, thresholdKey, root, rootMargin, frozen, freezeOnceVisible]);
 
     return [setRef, state.isIntersecting, state.entry] as const;
 }

@@ -7,6 +7,7 @@ interface Options {
     start: number;
     intervalMs?: number;
     isIncrement?: boolean;
+    /** When reached, the countdown stops automatically. */
     stop?: number;
 }
 
@@ -14,11 +15,10 @@ export function useCountdown({
     start,
     intervalMs = 1000,
     isIncrement = false,
-    stop = 0,
+    stop,
 }: Options) {
     const {
         count,
-        setCount,
         increment,
         decrement,
         reset,
@@ -33,18 +33,23 @@ export function useCountdown({
     const resetCountdown = useCallback(() => {
         stopCountdown();
         reset();
-    }, []);
+    }, [stopCountdown, reset]);
 
     const countdownCallback = useCallback(() => {
-        if (count === stop) {
+        if (stop !== undefined && count === stop) {
             stopCountdown();
             return;
         }
 
         (isIncrement ? increment : decrement)();
-    }, [count, stop, isIncrement]);
+    }, [count, stop, isIncrement, stopCountdown, increment, decrement]);
 
     useInterval(countdownCallback, isCountdownRunning ? intervalMs : null);
 
-    return { count, startCountdown, stopCountdown, resetCountdown } as const;
+    return {
+        count,
+        startCountdown,
+        stopCountdown,
+        resetCountdown,
+    } as const;
 }

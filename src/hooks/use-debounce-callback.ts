@@ -7,25 +7,25 @@ interface Options {
     maxWait?: number;
 }
 
-type DebouncedFn<T extends (...args: any[]) => any> = {
-    (...args: Parameters<T>): ReturnType<T> | undefined;
+export interface DebouncedFn<A extends unknown[], R> {
+    call: (...args: A) => R | undefined;
     cancel: () => void;
-    flush: (...args: Parameters<T>) => ReturnType<T> | undefined;
+    flush: (...args: A) => R | undefined;
     isPending: () => boolean;
-};
+}
 
-export function useDebounceCallback<T extends (...args: any[]) => any>(
-    fn: T,
+export function useDebounceCallback<A extends unknown[], R>(
+    fn: (...args: A) => R,
     delay: number | null = 500,
     { leading = false, trailing = true, maxWait }: Options = {},
-): DebouncedFn<T> {
+): DebouncedFn<A, R> {
     const fnRef = useRef(fn);
 
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const maxWaitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const lastArgsRef = useRef<Parameters<T> | null>(null);
-    const lastResultRef = useRef<ReturnType<T> | undefined>(undefined);
+    const lastArgsRef = useRef<A | null>(null);
+    const lastResultRef = useRef<R | undefined>(undefined);
 
     const leadingCalledRef = useRef(false);
 
@@ -48,7 +48,7 @@ export function useDebounceCallback<T extends (...args: any[]) => any>(
         leadingCalledRef.current = false;
     }, []);
 
-    const flush = useCallback((...args: Parameters<T>) => {
+    const flush = useCallback((...args: A) => {
         cancel();
         lastResultRef.current = fnRef.current(...args);
         return lastResultRef.current;
@@ -56,7 +56,7 @@ export function useDebounceCallback<T extends (...args: any[]) => any>(
 
     const isPending = useCallback(() => timerRef.current !== null, []);
 
-    const debounced = useCallback((...args: Parameters<T>): ReturnType<T> | undefined => {
+    const call = useCallback((...args: A): R | undefined => {
         lastArgsRef.current = args;
 
         if (leading && !leadingCalledRef.current) {
@@ -98,13 +98,8 @@ export function useDebounceCallback<T extends (...args: any[]) => any>(
         }, maxWait);
 
         return lastResultRef.current;
-    }, [delay, leading, trailing, maxWait, cancel]);
+    }, [delay, leading, trailing, maxWait]);
 
     useEffect(() => cancel, [cancel]);
-
-    return Object.assign(debounced, {
-        cancel,
-        flush,
-        isPending,
-    }) as DebouncedFn<T>;
+    return { call, cancel, flush, isPending };
 }

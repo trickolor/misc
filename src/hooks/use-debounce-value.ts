@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDebounceCallback } from "./use-debounce-callback";
 
 interface Options<T> {
@@ -9,18 +9,19 @@ interface Options<T> {
 }
 
 export function useDebounceValue<T>(
-    initialValue: T | (() => T),
+    value: T,
     delay: number | null = 500,
     { leading = false, trailing = true, maxWait, equalityFn }: Options<T> = {},
 ) {
-    const isEqual = equalityFn ?? ((first: T, second: T) => Object.is(first, second));
+    const equalityFnRef = useRef(equalityFn);
+    useEffect(() => { equalityFnRef.current = equalityFn; }, [equalityFn]);
 
-    const resolvedInitialValue = (initialValue instanceof Function)
-        ? initialValue()
-        : initialValue;
+    const isEqual = useCallback((a: T, b: T) => {
+        return equalityFnRef.current ? equalityFnRef.current(a, b) : Object.is(a, b);
+    }, []);
 
-    const [debouncedValue, setDebouncedValue] = useState(resolvedInitialValue);
-    const prevValueRef = useRef<T>(resolvedInitialValue);
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    const prevValueRef = useRef(value);
 
     const update = useDebounceCallback(
         setDebouncedValue,
@@ -28,10 +29,12 @@ export function useDebounceValue<T>(
         { leading, trailing, maxWait },
     );
 
-    if (!isEqual(prevValueRef.current, resolvedInitialValue)) {
-        update(resolvedInitialValue);
-        prevValueRef.current = resolvedInitialValue;
-    }
+    useEffect(() => {
+        if (!isEqual(prevValueRef.current, value)) {
+            update.call(value);
+            prevValueRef.current = value;
+        }
+    }, [value, isEqual, update]);
 
     return [debouncedValue, update] as const;
 }

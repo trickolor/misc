@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
 import { useEventListener } from "./use-event-listener";
 
 interface Options<T> {
@@ -35,7 +35,7 @@ export function useSessionStorage<T>(
         })();
 
         return parsed;
-    }, [deserializerFn, initialValue]);
+    }, [deserializerFn, initialValue, key]);
 
     const get = useCallback(() => {
         const resolvedInitialValue = (initialValue instanceof Function
@@ -54,7 +54,13 @@ export function useSessionStorage<T>(
         }
     }, [key, initialValue, deserialize]);
 
-    const [storedValue, setStoredValue] = useState(get);
+    const [[storedKey, storedValue], setStored] = useState<[string, T | null]>(() => [key, get()]);
+
+    const setStoredValue = useCallback((value: T | null) => {
+        setStored([key, value]);
+    }, [key]);
+
+    if (storedKey !== key) setStored([key, get()]);
 
     const set: Dispatch<SetStateAction<T | null>> = useCallback(value => {
         if (IS_SERVER) { console.warn('Key set attempted on non-client env'); return; }
@@ -75,7 +81,7 @@ export function useSessionStorage<T>(
         catch (error) {
             console.warn(`Failed to set value for key "${key}"`, error);
         }
-    }, [key, get, serialize]);
+    }, [key, get, serialize, setStoredValue]);
 
     const remove = useCallback(() => {
         if (IS_SERVER) { console.warn('Key remove attempted on non-client env'); return; }
@@ -88,15 +94,13 @@ export function useSessionStorage<T>(
         setStoredValue(resolvedInitialValue);
 
         window.dispatchEvent(new CustomEvent('session-storage', { detail: { key } }));
-    }, [key, initialValue]);
-
-    useEffect(() => setStoredValue(get), [key]);
+    }, [key, initialValue, setStoredValue]);
 
     const handleStorageChange = useCallback((event: StorageEvent | CustomEvent) => {
         const eventKey = 'detail' in event ? event.detail?.key : event.key;
         if (eventKey !== undefined && eventKey !== key) return;
         setStoredValue(get());
-    }, [key, get]);
+    }, [key, get, setStoredValue]);
 
     useEventListener({ event: 'storage', handler: handleStorageChange });
 

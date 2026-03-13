@@ -4,11 +4,11 @@ export function useCounter(initialValue?: number) {
     const [count, setCount] = useState(initialValue ?? 0);
 
     const increment = useCallback(() => {
-        setCount(prev => prev + 1)
+        setCount(prev => prev + 1);
     }, []);
 
     const decrement = useCallback(() => {
-        setCount(prev => prev - 1)
+        setCount(prev => prev - 1);
     }, []);
 
     const reset = useCallback(() => {
