@@ -1,7 +1,16 @@
-export default function App() {
+import { Scene, Viewport, Camera } from "./components/viewport";
 
+export default function App() {
     return (
-        <h1 className="text-3xl font-bold underline">Hello World</h1>
+        <main className="w-full h-screen"> 
+            <Scene>
+                <Viewport>
+                    <Camera>
+                        <span className="size-5 rounded-full bg-white absolute bottom-0 right-0 z-10" />
+                    </Camera>
+                </Viewport>
+            </Scene>
+        </main>
     );
 }
 
