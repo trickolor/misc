@@ -1,9 +1,11 @@
-import { createContext, useCallback, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
-
+import { createContext, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useObjectState, type ObjectStateUpdateFn } from "@/hooks/use-object-state";
 import { useEventListener } from "@/hooks/use-event-listener";
 import { useStrictContext } from "@/hooks/use-strict-context";
 import { cn } from "@/utils/cn";
+import { useKeyPress } from "@/hooks/use-key-press";
+
+// ---------- //
 
 interface PanState {
     lastX: number;
@@ -18,6 +20,19 @@ interface CameraState {
     zoom: number;
 }
 
+type ViewportCursorState =
+    | 'grab'
+    | 'grabbing'
+    | 'auto';
+
+const MIN_ZOOM = 0.1;
+const MAX_ZOOM = 10;
+const ZOOM_INCREMENT = 1.1;
+const ZOOM_DECREMENT = 0.9;
+const SCROLL_SENSITIVITY = 0.2;
+
+// ---------- //
+
 interface SceneContext {
     cameraState: CameraState;
     updateCameraState: ObjectStateUpdateFn<CameraState>;
@@ -29,6 +44,8 @@ interface SceneContext {
 }
 
 const SceneContext = createContext<SceneContext | null>(null);
+
+// ---------- //
 
 interface SceneProps {
     children?: ReactNode;
@@ -75,10 +92,6 @@ interface ViewportProps {
     children?: ReactNode;
 }
 
-// ---------- //
-
-type ViewportCursorState = 'grab' | 'grabbing' | 'auto';
-
 function Viewport({ children }: ViewportProps) {
     const {
         viewportRef,
@@ -94,39 +107,61 @@ function Viewport({ children }: ViewportProps) {
         else setCursorState('auto');
     };
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === ' ') {
-            panRef.current.spaceHold = true;
-            updateCursor();
-        }
+    const zoom = (cursorX: number, cursorY: number, zoomFactor: number) => {
+        updateCameraState(prev => {
+            const sceneX = (cursorX - prev.x) / prev.zoom;
+            const sceneY = (cursorY - prev.y) / prev.zoom;
+
+            const newZoom = Math.min(Math.max(prev.zoom * zoomFactor, MIN_ZOOM), MAX_ZOOM);
+
+            return {
+                x: cursorX - sceneX * newZoom,
+                y: cursorY - sceneY * newZoom,
+                zoom: newZoom,
+            };
+        });
     };
 
-    useEventListener({
-        event: 'keydown',
-        handler: handleKeyDown,
+    // ---------- //
+
+    useKeyPress(' ', () => {
+        panRef.current.spaceHold = true;
+        updateCursor();
     });
 
-    const handleKeyUp = (e: KeyboardEvent) => {
-        if (e.key === ' ') {
-            panRef.current.spaceHold = false;
-            updateCursor();
+    useKeyPress(' ', () => {
+        panRef.current.spaceHold = false;
+        updateCursor();
+    }, { eventType: 'keyup' });
+
+    useKeyPress(['+', '-', '=', '0'], (e) => {
+        if (!(e.ctrlKey || e.metaKey)) return;
+        e.preventDefault();
+
+        if (!viewportRef.current) return;
+        const viewportRect = viewportRef.current.getBoundingClientRect();
+
+        switch (e.key) {
+            case '+': case '=': zoom(viewportRect.width / 2, viewportRect.height / 2, ZOOM_INCREMENT); break;
+            case '-': zoom(viewportRect.width / 2, viewportRect.height / 2, ZOOM_DECREMENT); break;
+            case '0': updateCameraState({ x: 0, y: 0, zoom: 1 }); break;
+            default: break;
         }
-    };
-
-    useEventListener({
-        event: 'keyup',
-        handler: handleKeyUp,
     });
+
+    // ---------- //
 
     const handleMouseUp = () => {
         panRef.current.isPanning = false;
         updateCursor();
-    }
+    };
 
     useEventListener({
         event: 'mouseup',
         handler: handleMouseUp,
     });
+
+    // ---------- //
 
     const handleMouseDown = (e: MouseEvent) => {
         if (e.button === 1 || (e.button === 0 && panRef.current.spaceHold)) {
@@ -144,14 +179,16 @@ function Viewport({ children }: ViewportProps) {
         handler: handleMouseDown,
     });
 
+    // ---------- //
+
     const handleMouseMove = (e: MouseEvent) => {
         if (!panRef.current.isPanning) return;
 
         const deltaX = e.clientX - panRef.current.lastX;
         const deltaY = e.clientY - panRef.current.lastY;
 
-        panRef.current.lastX = e.clientX
-        panRef.current.lastY = e.clientY
+        panRef.current.lastX = e.clientX;
+        panRef.current.lastY = e.clientY;
 
         updateCameraState(prev => ({
             x: prev.x + deltaX,
@@ -164,20 +201,35 @@ function Viewport({ children }: ViewportProps) {
         handler: handleMouseMove,
     });
 
+    // ---------- //
+
     const handleWheel = (e: WheelEvent) => {
         e.preventDefault();
 
         if (!e.ctrlKey) updateCameraState(prev => ({
-            x: prev.x - e.deltaX,
-            y: prev.y - e.deltaY,
+            x: prev.x - e.deltaX * SCROLL_SENSITIVITY,
+            y: prev.y - e.deltaY * SCROLL_SENSITIVITY,
         }));
-    }
+
+        else {
+            if (!viewportRef.current) return;
+            const viewportRect = viewportRef.current.getBoundingClientRect();
+
+            const cursorX = e.clientX - viewportRect.left;
+            const cursorY = e.clientY - viewportRect.top;
+            const zoomFactor = e.deltaY < 0 ? ZOOM_INCREMENT : ZOOM_DECREMENT;
+
+            zoom(cursorX, cursorY, zoomFactor);
+        }
+    };
 
     useEventListener({
         event: 'wheel',
         handler: handleWheel,
         eventListenerOptions: { passive: false },
     });
+
+    // ---------- //
 
     return (
         <div
