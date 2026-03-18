@@ -6,7 +6,7 @@ interface Size {
 }
 
 interface Options<T extends HTMLElement = HTMLElement> {
-    ref: RefObject<T>;
+    ref: RefObject<T | null>;
     onResize?: (size: Size) => void;
     box?: ResizeObserverBoxOptions;
 }
