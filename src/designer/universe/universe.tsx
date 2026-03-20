@@ -2,6 +2,7 @@ import { useMemo, useRef, type ReactNode } from "react";
 import { useObjectState } from "@/hooks/use-object-state";
 import { useStrictContext } from "@/hooks/use-strict-context";
 import { useResizeObserver } from "@/hooks/use-resize-observer";
+import { useMemoizedObject } from "@/hooks/use-memoized-object";
 import { cn } from "@/utils/cn";
 
 import { useUniverseScroll } from "./use-universe-scroll";
@@ -19,6 +20,7 @@ import {
     type ScrollbarDragState,
     type UniverseContextValue,
 } from "./universe-context";
+
 
 // ---------- //
 
@@ -84,16 +86,11 @@ function Root({ children }: UniverseProps) {
 
     // ---------- //
 
-    const reactiveContextValue = useMemo(() => ({
+    const contextValue: UniverseContextValue = useMemoizedObject({
         cameraState,
         updateCameraState,
         contentBoundsState,
         updateContentBoundsState,
-
-    }), [cameraState, updateCameraState, contentBoundsState, updateContentBoundsState]);
-
-    const contextValue: UniverseContextValue = useMemo(() => ({
-        ...reactiveContextValue,
         panStateRef,
         vieportElementRef,
         cameraElementRef,
@@ -102,7 +99,7 @@ function Root({ children }: UniverseProps) {
         horizontalScrollbarThumbElementRef,
         verticalScrollbarTrackElementRef,
         verticalScrollbarThumbElementRef,
-    }), [reactiveContextValue]);
+    });
 
     return (
         <UniverseContext.Provider value={contextValue}>
@@ -291,6 +288,14 @@ function VerticalScrollbarThumb({ className }: VerticalScrollbarThumbProps) {
 }
 
 // ---------- //
+
+Root.displayName = 'Universe.Root';
+Viewport.displayName = 'Universe.Viewport';
+Camera.displayName = 'Universe.Camera';
+HorizontalScrollbarTrack.displayName = 'Universe.HorizontalScrollbarTrack';
+HorizontalScrollbarThumb.displayName = 'Universe.HorizontalScrollbarThumb';
+VerticalScrollbarTrack.displayName = 'Universe.VerticalScrollbarTrack';
+VerticalScrollbarThumb.displayName = 'Universe.VerticalScrollbarThumb';
 
 export const Universe = Object.assign(Root, {
     Viewport,

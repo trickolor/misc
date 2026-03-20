@@ -1,23 +1,27 @@
 import { Universe } from "./designer/universe/universe";
+import { Root } from "./designer/root/root";
+import { Canvas } from "./designer/canvas/canvas";
 
 export default function App() {
     return (
         <main className="w-full h-screen">
-            <Universe>
-                <Universe.Viewport>
-                    <Universe.HorizontalScrollbarTrack>
-                        <Universe.HorizontalScrollbarThumb />
-                    </Universe.HorizontalScrollbarTrack>
+            <Root>
+                <Universe>
+                    <Universe.Viewport>
+                        <Universe.HorizontalScrollbarTrack>
+                            <Universe.HorizontalScrollbarThumb />
+                        </Universe.HorizontalScrollbarTrack>
 
-                    <Universe.VerticalScrollbarTrack>
-                        <Universe.VerticalScrollbarThumb />
-                    </Universe.VerticalScrollbarTrack>
+                        <Universe.VerticalScrollbarTrack>
+                            <Universe.VerticalScrollbarThumb />
+                        </Universe.VerticalScrollbarTrack>
 
-                    <Universe.Camera>
-                        <span className="size-5 rounded-full bg-white absolute top-96 left-96 z-10" />
-                    </Universe.Camera>
-                </Universe.Viewport>
-            </Universe>
+                        <Universe.Camera>
+                            <Canvas />
+                        </Universe.Camera>
+                    </Universe.Viewport>
+                </Universe>
+            </Root>
         </main>
     );
 }

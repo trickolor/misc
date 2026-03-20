@@ -3,7 +3,13 @@ import { useEventListener } from "@/hooks/use-event-listener";
 import { useStrictContext } from "@/hooks/use-strict-context";
 import { useKeyPress } from "@/hooks/use-key-press";
 
-import { UniverseContext, SCROLL_SENSITIVITY, type ViewportCursorType } from "./universe-context";
+import {
+    UniverseContext,
+    SCROLL_SENSITIVITY,
+    type ViewportCursorType,
+    ARROW_KEY_PAN_STEP,
+    SHIFT_ARROW_KEY_PAN_STEP,
+} from "./universe-context";
 
 // ---------- //
 
@@ -32,9 +38,24 @@ export function useUniversePan({ clampX, clampY }: UseUniversePanOptions): UseUn
 
     // ---------- //
 
-    useKeyPress(' ', () => {
-        panStateRef.current.spaceHold = true;
-        updateCursorType();
+    useKeyPress([' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'], (e) => {
+        if (e.key === ' ') {
+            panStateRef.current.spaceHold = true;
+            updateCursorType();
+            return;
+        }
+
+        e.preventDefault();
+
+        const step = e.shiftKey ? SHIFT_ARROW_KEY_PAN_STEP : ARROW_KEY_PAN_STEP
+
+        const deltaX = e.key === 'ArrowLeft' ? step : e.key === 'ArrowRight' ? -step : 0
+        const deltaY = e.key === 'ArrowUp' ? step : e.key === 'ArrowDown' ? -step : 0
+
+        updateCameraState(prev => ({
+            x: clampX(prev.x + deltaX, prev.zoom),
+            y: clampY(prev.y + deltaY, prev.zoom),
+        }))
     });
 
     useKeyPress(' ', () => {
