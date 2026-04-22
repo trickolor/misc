@@ -10,7 +10,7 @@ type InteractionEventType =
     | "focusout";
 
 interface Options<T extends HTMLElement = HTMLElement> {
-    ref: RefObject<T> | RefObject<T>[] | null;
+    ref: RefObject<T | null> | RefObject<T | null>[] | null;
     handler: (event: Event) => void;
     eventType?: InteractionEventType;
     eventListenerOptions?: boolean | AddEventListenerOptions;

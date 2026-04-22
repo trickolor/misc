@@ -1,20 +1,57 @@
 import { createContext } from "react";
 
-export interface RectangleNode {
+export interface CanvasNodeBase<T extends string> {
     id: string;
-    type: 'rectangle';
+    type: T;
     x: number;
     y: number;
     width: number;
     height: number;
     fill: string;
     opacity: number;
+    rotation: number;
 }
 
-export type CanvasNode = RectangleNode; // more node types will be added later
+export interface RectangleCanvasNode extends CanvasNodeBase<'rectangle'> { }
+export interface TextCanvasNode extends CanvasNodeBase<'text'> { }
+export interface LineCanvasNode extends CanvasNodeBase<'line'> { }
+export interface ArrowCanvasNode extends CanvasNodeBase<'arrow'> { }
+export interface EllipseCanvasNode extends CanvasNodeBase<'ellipse'> { }
+export interface PolygonCanvasNode extends CanvasNodeBase<'polygon'> { }
+export interface StarCanvasNode extends CanvasNodeBase<'star'> { }
+export interface ImageCanvasNode extends CanvasNodeBase<'image'> { }
+export interface VideoCanvasNode extends CanvasNodeBase<'video'> { }
+export interface VectorCanvasNode extends CanvasNodeBase<'vector'> { }
+
+export type CanvasNode =
+    | RectangleCanvasNode
+    | TextCanvasNode
+    | LineCanvasNode
+    | ArrowCanvasNode
+    | EllipseCanvasNode
+    | PolygonCanvasNode
+    | StarCanvasNode
+    | ImageCanvasNode
+    | VideoCanvasNode
+    | VectorCanvasNode;
+
+export type CanvasNodeType = CanvasNode['type'];
+
+export interface CanvasNodeTypeMap extends Record<CanvasNodeType, CanvasNode> {
+    rectangle: RectangleCanvasNode;
+    text: TextCanvasNode;
+    line: LineCanvasNode;
+    arrow: ArrowCanvasNode;
+    ellipse: EllipseCanvasNode;
+    polygon: PolygonCanvasNode;
+    star: StarCanvasNode;
+    image: ImageCanvasNode;
+    video: VideoCanvasNode;
+    vector: VectorCanvasNode;
+}
 
 export interface RootContextValue {
-    nodes: CanvasNode[];
+    nodes: ReadonlyArray<CanvasNode>;
     nodeMap: Map<string, CanvasNode>;
 
     addNode: (node: CanvasNode) => void;
@@ -27,8 +64,11 @@ export interface RootContextValue {
     updateNodesTogether: (nodeIds: string[], sharedUpdate: Partial<CanvasNode>) => void;
     updateNodesSeparately: (nodeIds: string[], updateMap: Record<string, Partial<CanvasNode>>) => void;
 
-    selectedNodeIds: string[];
-    setSelectedNodeIds: (nodeIds: string[]) => void;
+    selectedNodeIds: ReadonlyArray<string>;
+    addSelectedNodeId: (id: string) => void;
+    addSelectedNodeIds: (ids: string[]) => void;
+    removeSelectedNodeId: (id: string) => void;
+    removeSelectedNodeIds: (ids: string[]) => void;
 }
 
 export const RootContext = createContext<RootContextValue | null>(null);

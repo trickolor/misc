@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-interface SetType<T> {
+interface SetActions<T> {
     add: (...items: T[]) => void;
     delete: (item: T) => void;
     clear: () => void;
@@ -8,10 +8,9 @@ interface SetType<T> {
     values: () => T[];
     size: number;
     isEmpty: boolean;
-    set: ReadonlySet<T>;
 }
 
-export function useSet<T>(initialItems: T[] = []): SetType<T> {
+export function useSet<T>(initialItems: T[] = []): [ReadonlySet<T>, SetActions<T>] {
     const [set, setSet] = useState<ReadonlySet<T>>(
         () => new Set(initialItems)
     );
@@ -39,7 +38,7 @@ export function useSet<T>(initialItems: T[] = []): SetType<T> {
     const has = useCallback((item: T) => set.has(item), [set]);
     const values = useCallback(() => Array.from(set.values()), [set]);
 
-    return {
+    const actions = {
         add,
         delete: remove,
         clear,
@@ -47,6 +46,7 @@ export function useSet<T>(initialItems: T[] = []): SetType<T> {
         values,
         size: set.size,
         isEmpty: !set.size,
-        set,
     };
+
+    return [set, actions];
 }
