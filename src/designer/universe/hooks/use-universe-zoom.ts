@@ -2,7 +2,8 @@ import { useEventListener } from "@/hooks/use-event-listener";
 import { useStrictContext } from "@/hooks/use-strict-context";
 import { useKeyPress } from "@/hooks/use-key-press";
 
-import { UniverseContext, MIN_ZOOM, MAX_ZOOM, ZOOM_INCREMENT, ZOOM_DECREMENT } from "./universe-context";
+import { UniverseContext } from "../context";
+import { MIN_ZOOM, MAX_ZOOM, ZOOM_INCREMENT, ZOOM_DECREMENT } from "../constants";
 
 // ---------- //
 

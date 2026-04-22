@@ -2,7 +2,7 @@ import { createContext, type ReactNode } from "react";
 
 import { useStrictContext } from "@/hooks/use-strict-context";
 
-import type { RectangleNodeContext } from "./context";
+import type { RectangleNodeContext } from "./types";
 import { CanvasNodeBaseContext } from "../base";
 
 // ---------- //
@@ -30,7 +30,6 @@ function Root({ children }: RootProps) {
 function View() {
     const {
         id, width, height,
-        isSelected,
         fill, opacity,
     } = useStrictContext(CanvasNodeBaseContext);
 
@@ -40,9 +39,7 @@ function View() {
             data-component="view"
             data-node-id={id}
 
-            data-selected={isSelected ? "" : undefined}
-
-            className="absolute data-selected:border-2 data-selected:border-sky-500"
+            className="absolute"
             style={{ width, height, backgroundColor: fill, opacity }}
         />
     );

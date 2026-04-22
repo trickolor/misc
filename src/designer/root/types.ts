@@ -1,5 +1,3 @@
-import { createContext } from "react";
-
 export interface CanvasNodeBase<T extends string> {
     id: string;
     type: T;
@@ -13,8 +11,19 @@ export interface CanvasNodeBase<T extends string> {
 }
 
 export interface RectangleCanvasNode extends CanvasNodeBase<'rectangle'> { }
-export interface TextCanvasNode extends CanvasNodeBase<'text'> { }
-export interface LineCanvasNode extends CanvasNodeBase<'line'> { }
+
+export interface TextCanvasNode extends CanvasNodeBase<'text'> {
+    content: string;
+    font: string;
+    fontSize: number;
+    fontWeight: number;
+    lineHeight: number;
+    letterSpacing: number;
+}
+
+export interface LineCanvasNode extends CanvasNodeBase<'line'> {
+    strokeWidth: number;
+}
 export interface ArrowCanvasNode extends CanvasNodeBase<'arrow'> { }
 export interface EllipseCanvasNode extends CanvasNodeBase<'ellipse'> { }
 export interface PolygonCanvasNode extends CanvasNodeBase<'polygon'> { }
@@ -70,5 +79,3 @@ export interface RootContextValue {
     removeSelectedNodeId: (id: string) => void;
     removeSelectedNodeIds: (ids: string[]) => void;
 }
-
-export const RootContext = createContext<RootContextValue | null>(null);

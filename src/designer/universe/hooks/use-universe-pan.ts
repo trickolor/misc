@@ -3,13 +3,13 @@ import { useEventListener } from "@/hooks/use-event-listener";
 import { useStrictContext } from "@/hooks/use-strict-context";
 import { useKeyPress } from "@/hooks/use-key-press";
 
+import { UniverseContext } from "../context";
 import {
-    UniverseContext,
     SCROLL_SENSITIVITY,
-    type ViewportCursorType,
     ARROW_KEY_PAN_STEP,
     SHIFT_ARROW_KEY_PAN_STEP,
-} from "./universe-context";
+} from "../constants";
+import type { ViewportCursorType } from "../types";
 
 // ---------- //
 

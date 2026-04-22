@@ -2,23 +2,8 @@ import { useCallback } from "react";
 import { useEventListener } from "@/hooks/use-event-listener";
 import { useStrictContext } from "@/hooks/use-strict-context";
 
-import { UniverseContext, MAX_OFFSET, type ContentBoundsState } from "./universe-context";
-
-// ---------- //
-
-function getPanBoundsX(zoom: number, width: number, bounds: ContentBoundsState) {
-    const maxX = -(bounds.left - MAX_OFFSET) * zoom;
-    const minX = -((bounds.right + MAX_OFFSET) * zoom - width);
-    const panRangeX = Math.max(0, maxX - minX);
-    return { minX, maxX, panRangeX };
-}
-
-function getPanBoundsY(zoom: number, height: number, bounds: ContentBoundsState) {
-    const maxY = -(bounds.top - MAX_OFFSET) * zoom;
-    const minY = -((bounds.bottom + MAX_OFFSET) * zoom - height);
-    const panRangeY = Math.max(0, maxY - minY);
-    return { minY, maxY, panRangeY };
-}
+import { UniverseContext } from "../context";
+import { getPanBoundsX, getPanBoundsY } from "../helpers/scroll-geometry";
 
 // ---------- //
 

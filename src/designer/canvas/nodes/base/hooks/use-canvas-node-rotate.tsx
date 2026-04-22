@@ -3,17 +3,17 @@ import { useCallback, useRef } from "react";
 import { useStrictContext } from "@/hooks/use-strict-context";
 import { useEventListener } from "@/hooks/use-event-listener";
 
-import { UniverseContext } from "@/designer/universe/universe-context";
-import { RootContext } from "@/designer/root/root-context";
+import { UniverseContext } from "@/designer/universe/context";
+import { RootContext } from "@/designer/root/context";
 
 import { CanvasNodeBaseImpl } from "../impl";
+import { ROTATION_SNAP_DEGREES } from "../constants";
 
 // ---------- //
 
-const ROTATION_SNAP_DEGREES = 15;
-
 interface CanvasNodeRotateState {
-    isDragging: boolean;
+    isActive: boolean;
+    hasMoved: boolean;
     centerX: number;
     centerY: number;
     angleOffset: number;
@@ -26,12 +26,13 @@ interface UseCanvasNodeRotateResult {
 // ---------- //
 
 export function useCanvasNodeRotate(): UseCanvasNodeRotateResult {
-    const { id, x, y, width, height, rotation } = useStrictContext(CanvasNodeBaseImpl.Context);
+    const { id, x, y, width, height, rotation, setIsDragging } = useStrictContext(CanvasNodeBaseImpl.Context);
     const { cameraState } = useStrictContext(UniverseContext);
     const { updateNode } = useStrictContext(RootContext);
 
     const dragRef = useRef<CanvasNodeRotateState>({
-        isDragging: false,
+        isActive: false,
+        hasMoved: false,
         centerX: 0,
         centerY: 0,
         angleOffset: 0,
@@ -41,7 +42,12 @@ export function useCanvasNodeRotate(): UseCanvasNodeRotateResult {
         event: 'mousemove',
         handler: (e: MouseEvent) => {
             const drag = dragRef.current;
-            if (!drag.isDragging) return;
+            if (!drag.isActive) return;
+
+            if (!drag.hasMoved) {
+                drag.hasMoved = true;
+                setIsDragging(true);
+            }
 
             const currentAngle = Math.atan2(
                 e.clientY - drag.centerY,
@@ -59,11 +65,20 @@ export function useCanvasNodeRotate(): UseCanvasNodeRotateResult {
 
     useEventListener({
         event: 'mouseup',
-        handler: () => dragRef.current.isDragging = false,
+        handler: () => {
+            const drag = dragRef.current;
+            if (!drag.isActive) return;
+            drag.isActive = false;
+            if (drag.hasMoved) {
+                drag.hasMoved = false;
+                setIsDragging(false);
+            }
+        },
     });
 
     const handleCanvasNodeRotate = useCallback((e: React.MouseEvent<HTMLElement>) => {
         e.stopPropagation();
+        e.preventDefault();
 
         const screenNodeX = x * cameraState.zoom + cameraState.x;
         const screenNodeY = y * cameraState.zoom + cameraState.y;
@@ -81,7 +96,8 @@ export function useCanvasNodeRotate(): UseCanvasNodeRotateResult {
         const angleOffset = rotation - startAngle;
 
         dragRef.current = {
-            isDragging: true,
+            isActive: true,
+            hasMoved: false,
             centerX,
             centerY,
             angleOffset,

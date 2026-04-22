@@ -1,30 +1,38 @@
 import { useStrictContext } from "@/hooks/use-strict-context";
-import { RootContext, type CanvasNode } from "../root/root-context";
-import { RectangleCanvasNode, type RectangleCanvasNodeProps } from "./rectangle-canvas-node";
 import { useKeyPress } from "@/hooks/use-key-press";
 
-const TEST_NODE: RectangleCanvasNodeProps = {
-    id: 'test',
-    type: 'rectangle',
-    x: 0,
-    y: 0,
-    width: 100,
-    height: 100,
-    fill: '#FFFFFF',
-    opacity: 1,
-    rotation: 0,
-};
+import { RootContext } from "../root/context";
+import type { CanvasNode } from "../root/types";
+import { RectangleNode } from "./nodes/rectangle";
+import { TextNode } from "./nodes/text";
+import { LineNode } from "./nodes/line";
+
+import {
+    TEST_LINE_NODE,
+    TEST_RECTANGLE_NODE,
+    TEST_TEXT_NODE,
+} from "./constants";
 
 export function Canvas() {
     const { addNode, nodes } = useStrictContext(RootContext);
 
-    useKeyPress('Enter', () => {
-        addNode({ ...TEST_NODE, id: crypto.randomUUID() });
+    useKeyPress('1', () => {
+        addNode({ ...TEST_RECTANGLE_NODE, id: crypto.randomUUID() });
+    });
+
+    useKeyPress('2', () => {
+        addNode({ ...TEST_TEXT_NODE, id: crypto.randomUUID() });
+    });
+
+    useKeyPress('3', () => {
+        addNode({ ...TEST_LINE_NODE, id: crypto.randomUUID() });
     });
 
     const SpecificCanvasNode = (node: CanvasNode) => {
         switch (node.type) {
-            case 'rectangle': return <RectangleCanvasNode key={node.id} {...node} />;
+            case 'rectangle': return <RectangleNode key={node.id} {...node} />;
+            case 'text': return <TextNode key={node.id} {...node} />;
+            case 'line': return <LineNode key={node.id} {...node} />;
             default: return null;
         }
     };

@@ -3,70 +3,91 @@ import { useMemoizedObject } from "@/hooks/use-memoized-object";
 import { useList } from "@/hooks/use-list";
 import { useSet } from "@/hooks/use-set";
 
-import { RootContext, type CanvasNode } from "./root-context";
+import { RootContext } from "./context";
+import type { CanvasNode } from "./types";
 
 interface RootProps {
     children?: ReactNode;
 }
 
 export function Root({ children }: RootProps) {
-    const [nodes, nodeListActions] = useList<CanvasNode>();
-    const [ids, idSetActions] = useSet<string>();
+    const [nodes, nodeActions] = useList<CanvasNode>();
+    const [ids, idActions] = useSet<string>();
+
+    const { push: pushNodes, set: setNodes } = nodeActions;
+    const { add: addId, delete: deleteId } = idActions;
+
+    // ---------- selection ---------- //
 
     const selectedNodeIds = useMemo<ReadonlyArray<string>>(() => {
         return Array.from(ids);
     }, [ids]);
 
     const addSelectedNodeId = useCallback((id: string) => {
-        idSetActions.add(id);
-    }, [idSetActions.add]);
+        addId(id);
+    }, [addId]);
 
-    const addSelectedNodeIds = useCallback((ids: string[]) => {
-        idSetActions.add(...ids);
-    }, [idSetActions.add]);
+    const addSelectedNodeIds = useCallback((newIds: string[]) => {
+        addId(...newIds);
+    }, [addId]);
 
     const removeSelectedNodeId = useCallback((id: string) => {
-        idSetActions.delete(id);
-    }, [idSetActions.delete]);
+        deleteId(id);
+    }, [deleteId]);
 
-    const removeSelectedNodeIds = useCallback((ids: string[]) => {
-        ids.forEach(id => idSetActions.delete(id));
-    }, [idSetActions.delete]);
+    const removeSelectedNodeIds = useCallback((idsToRemove: string[]) => {
+        idsToRemove.forEach(deleteId);
+    }, [deleteId]);
+
+    // ---------- nodes ---------- //
 
     const addNode = useCallback((node: CanvasNode) => {
-        nodeListActions.push(node);
-    }, [nodes]);
+        pushNodes(node);
+    }, [pushNodes]);
 
     const addNodes = useCallback((newNodes: CanvasNode[]) => {
-        nodeListActions.push(...newNodes);
-    }, [nodes]);
+        pushNodes(...newNodes);
+    }, [pushNodes]);
 
     const removeNode = useCallback((nodeId: string) => {
-        nodeListActions.set(nodes.filter(node => node.id !== nodeId));
-    }, [nodes, nodes]);
+        setNodes(prev => prev.filter(node => node.id !== nodeId));
+    }, [setNodes]);
 
     const removeNodes = useCallback((nodeIds: string[]) => {
-        nodeListActions.set(nodes.filter(node => !nodeIds.includes(node.id)));
-    }, [nodes, nodes]);
+        setNodes(prev => prev.filter(node => !nodeIds.includes(node.id)));
+    }, [setNodes]);
 
     const updateNode = useCallback((nodeId: string, update: Partial<CanvasNode>) => {
-        const index = nodes.findIndex(node => node.id === nodeId);
-        if (index !== -1) {
-            nodeListActions.updateAt(index, { ...nodes[index], ...update });
-        }
-    }, [nodes, nodes]);
+        setNodes(prev => {
+            const index = prev.findIndex(node => node.id === nodeId);
+            if (index === -1) return prev;
+            const next = prev.slice();
+            next[index] = { ...prev[index], ...update } as CanvasNode;
+            return next;
+        });
+    }, [setNodes]);
 
     const updateNodesTogether = useCallback((nodeIds: string[], sharedUpdate: Partial<CanvasNode>) => {
-        nodeListActions.set(nodes.map(node => nodeIds.includes(node.id) ? { ...node, ...sharedUpdate } : node));
-    }, [nodes, nodes]);
+        setNodes(prev => prev.map(node =>
+            nodeIds.includes(node.id) ? { ...node, ...sharedUpdate } as CanvasNode : node
+        ));
+    }, [setNodes]);
 
     const updateNodesSeparately = useCallback((nodeIds: string[], updateMap: Record<string, Partial<CanvasNode>>) => {
-        nodeListActions.set(nodes.map(node => nodeIds.includes(node.id) ? { ...node, ...updateMap[node.id] } : node));
-    }, [nodes, nodes]);
+        setNodes(prev => prev.map(node => {
+            if (!nodeIds.includes(node.id)) return node;
+            const update = updateMap[node.id];
+            return update ? { ...node, ...update } as CanvasNode : node;
+        }));
+    }, [setNodes]);
+
+    // ---------- derived ---------- //
 
     const nodeMap = useMemo(() => {
         return new Map(nodes.map(node => [node.id, node]));
     }, [nodes]);
+
+    // ---------- context ---------- //
 
     const value = useMemoizedObject({
         nodes,

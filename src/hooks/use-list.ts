@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 
 interface ListActions<T> {
-    set: (list: T[]) => void;
+    set: (list: T[] | ((prev: T[]) => T[])) => void;
     push: (...items: T[]) => void;
     removeAt: (index: number) => void;
     insertAt: (index: number, item: T) => void;
@@ -12,8 +12,8 @@ interface ListActions<T> {
 export function useList<T>(initialList: T[] = []): [T[], ListActions<T>] {
     const [list, setList] = useState<T[]>(initialList);
 
-    const set = useCallback((newList: T[]) => {
-        setList(newList);
+    const set = useCallback((next: T[] | ((prev: T[]) => T[])) => {
+        setList(next);
     }, []);
 
     const push = useCallback((...items: T[]) => {

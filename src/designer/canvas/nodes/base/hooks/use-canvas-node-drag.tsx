@@ -1,14 +1,15 @@
 import { useCallback, useRef } from "react";
 
-import { UniverseContext } from "@/designer/universe/universe-context";
-import { RootContext } from "@/designer/root/root-context";
+import { UniverseContext } from "@/designer/universe/context";
+import { RootContext } from "@/designer/root/context";
 import { useStrictContext } from "@/hooks/use-strict-context";
 import { useEventListener } from "@/hooks/use-event-listener";
 
 import { CanvasNodeBaseImpl } from "../impl";
 
 interface CanvasNodeDragState {
-    isDragging: boolean;
+    isActive: boolean;
+    hasMoved: boolean;
     startMouseX: number;
     startMouseY: number;
     startNodeX: number;
@@ -20,12 +21,13 @@ interface UseCanvasNodeDragResult {
 }
 
 export function useCanvasNodeDrag(): UseCanvasNodeDragResult {
-    const { id, x, y } = useStrictContext(CanvasNodeBaseImpl.Context);
+    const { id, x, y, setIsDragging } = useStrictContext(CanvasNodeBaseImpl.Context);
     const { cameraState } = useStrictContext(UniverseContext)
     const { updateNode } = useStrictContext(RootContext);
 
     const dragRef = useRef<CanvasNodeDragState>({
-        isDragging: false,
+        isActive: false,
+        hasMoved: false,
         startMouseX: 0,
         startMouseY: 0,
         startNodeX: 0,
@@ -37,41 +39,50 @@ export function useCanvasNodeDrag(): UseCanvasNodeDragResult {
     useEventListener({
         event: 'mousemove',
         handler: (e: MouseEvent) => {
-            if (!dragRef.current.isDragging) return;
+            const drag = dragRef.current;
+            if (!drag.isActive) return;
 
-            const {
-                startMouseX,
-                startMouseY,
-                startNodeX,
-                startNodeY,
-            } = dragRef.current;
+            if (!drag.hasMoved) {
+                drag.hasMoved = true;
+                setIsDragging(true);
+            }
 
-            const sceneDeltaX = (e.clientX - startMouseX) / cameraState.zoom
-            const sceneDeltaY = (e.clientY - startMouseY) / cameraState.zoom
+            const sceneDeltaX = (e.clientX - drag.startMouseX) / cameraState.zoom
+            const sceneDeltaY = (e.clientY - drag.startMouseY) / cameraState.zoom
 
             updateNode(id, {
-                x: startNodeX + sceneDeltaX,
-                y: startNodeY + sceneDeltaY,
+                x: drag.startNodeX + sceneDeltaX,
+                y: drag.startNodeY + sceneDeltaY,
             });
         },
     });
 
     useEventListener({
         event: 'mouseup',
-        handler: () => dragRef.current.isDragging = false,
+        handler: () => {
+            const drag = dragRef.current;
+            if (!drag.isActive) return;
+            drag.isActive = false;
+            if (drag.hasMoved) {
+                drag.hasMoved = false;
+                setIsDragging(false);
+            }
+        },
     });
 
     const handleCanvasNodeDrag = useCallback((e: React.MouseEvent<HTMLOrSVGElement>) => {
         e.stopPropagation();
+        e.preventDefault();
 
         dragRef.current = {
-            isDragging: true,
+            isActive: true,
+            hasMoved: false,
             startMouseX: e.clientX,
             startMouseY: e.clientY,
             startNodeX: x,
             startNodeY: y,
         }
-    }, [x, y, dragRef]);
+    }, [x, y]);
 
     return { handleCanvasNodeDrag }
 }

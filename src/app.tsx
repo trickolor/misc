@@ -1,4 +1,4 @@
-import { Universe } from "./designer/universe/universe";
+import { Universe } from "./designer/universe/impl";
 import { Root } from "./designer/root/root";
 import { Canvas } from "./designer/canvas/canvas";
 

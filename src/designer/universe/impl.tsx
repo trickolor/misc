@@ -5,54 +5,25 @@ import { useResizeObserver } from "@/hooks/use-resize-observer";
 import { useMemoizedObject } from "@/hooks/use-memoized-object";
 import { cn } from "@/utils/cn";
 
-import { useUniverseScroll } from "./use-universe-scroll";
-import { useUniverseZoom } from "./use-universe-zoom";
-import { useUniversePan } from "./use-universe-pan";
+import { useUniverseScroll } from "./hooks/use-universe-scroll";
+import { useUniverseZoom } from "./hooks/use-universe-zoom";
+import { useUniversePan } from "./hooks/use-universe-pan";
 
+import { UniverseContext } from "./context";
+import { DEFAULT_CONTENT_BOUNDS } from "./constants";
 import {
-    UniverseContext,
-    DEFAULT_CONTENT_BOUNDS,
-    MAX_OFFSET,
-    MIN_THUMB_SIZE,
-    type CameraState,
-    type ContentBoundsState,
-    type PanState,
-    type ScrollbarDragState,
-    type UniverseContextValue,
-} from "./universe-context";
-
-
-// ---------- //
-
-function getPanBoundsX(zoom: number, width: number, bounds: ContentBoundsState) {
-    const maxX = -(bounds.left - MAX_OFFSET) * zoom;
-    const minX = -((bounds.right + MAX_OFFSET) * zoom - width);
-    const panRangeX = Math.max(0, maxX - minX);
-    return { minX, maxX, panRangeX };
-}
-
-function getPanBoundsY(zoom: number, height: number, bounds: ContentBoundsState) {
-    const maxY = -(bounds.top - MAX_OFFSET) * zoom;
-    const minY = -((bounds.bottom + MAX_OFFSET) * zoom - height);
-    const panRangeY = Math.max(0, maxY - minY);
-    return { minY, maxY, panRangeY };
-}
-
-function getThumbX(trackWidth: number, cameraState: CameraState, bounds: ContentBoundsState) {
-    const { maxX, panRangeX } = getPanBoundsX(cameraState.zoom, trackWidth, bounds);
-    if (panRangeX === 0) return { thumbWidth: 0, thumbX: 0, visible: false };
-    const thumbWidth = Math.max(MIN_THUMB_SIZE, trackWidth * trackWidth / (trackWidth + panRangeX));
-    const scrollProgress = Math.min(1, Math.max(0, (maxX - cameraState.x) / panRangeX));
-    return { thumbWidth, thumbX: scrollProgress * (trackWidth - thumbWidth), visible: true };
-}
-
-function getThumbY(trackHeight: number, cameraState: CameraState, bounds: ContentBoundsState) {
-    const { maxY, panRangeY } = getPanBoundsY(cameraState.zoom, trackHeight, bounds);
-    if (panRangeY === 0) return { thumbHeight: 0, thumbY: 0, visible: false };
-    const thumbHeight = Math.max(MIN_THUMB_SIZE, trackHeight * trackHeight / (trackHeight + panRangeY));
-    const scrollProgress = Math.min(1, Math.max(0, (maxY - cameraState.y) / panRangeY));
-    return { thumbHeight, thumbY: scrollProgress * (trackHeight - thumbHeight), visible: true };
-}
+    getPanBoundsX,
+    getPanBoundsY,
+    getThumbX,
+    getThumbY,
+} from "./helpers/scroll-geometry";
+import type {
+    CameraState,
+    ContentBoundsState,
+    PanState,
+    ScrollbarDragState,
+    UniverseContextValue,
+} from "./types";
 
 // ---------- //
 

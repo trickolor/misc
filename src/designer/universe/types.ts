@@ -1,8 +1,5 @@
-import { createContext } from "react";
-import { type ObjectStateUpdateFn } from "@/hooks/use-object-state";
 import type { RefObject } from "react";
-
-// ---------- //
+import type { ObjectStateUpdateFn } from "@/hooks/use-object-state";
 
 export interface PanState {
     lastX: number; lastY: number;
@@ -33,27 +30,6 @@ export interface ScrollbarDragState {
 
 export type ViewportCursorType = 'grab' | 'grabbing' | 'auto';
 
-// ---------- //
-
-export const MIN_ZOOM = 0.1;
-export const MAX_ZOOM = 10;
-export const ZOOM_INCREMENT = 1.1;
-export const ZOOM_DECREMENT = 0.9;
-export const SCROLL_SENSITIVITY = 0.5;
-export const MIN_THUMB_SIZE = 20;
-export const MAX_OFFSET = 4000;
-export const ARROW_KEY_PAN_STEP = 20;
-export const SHIFT_ARROW_KEY_PAN_STEP = 100;
-
-export const DEFAULT_CONTENT_BOUNDS: ContentBoundsState = {
-    left: -2000,
-    right: 2000,
-    top: -2000,
-    bottom: 2000,
-};
-
-// ---------- //
-
 export interface UniverseContextValue {
     cameraState: CameraState;
     updateCameraState: ObjectStateUpdateFn<CameraState>;
@@ -74,5 +50,3 @@ export interface UniverseContextValue {
     verticalScrollbarTrackElementRef: RefObject<HTMLDivElement | null>;
     verticalScrollbarThumbElementRef: RefObject<HTMLSpanElement | null>;
 }
-
-export const UniverseContext = createContext<UniverseContextValue | null>(null);

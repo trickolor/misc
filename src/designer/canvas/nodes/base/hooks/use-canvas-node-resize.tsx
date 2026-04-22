@@ -2,36 +2,18 @@ import { useCallback, useRef } from "react";
 
 import { useStrictContext } from "@/hooks/use-strict-context";
 import { useEventListener } from "@/hooks/use-event-listener";
-import { UniverseContext } from "@/designer/universe/universe-context";
-import { RootContext } from "@/designer/root/root-context";
+import { UniverseContext } from "@/designer/universe/context";
+import { RootContext } from "@/designer/root/context";
 
 import { CanvasNodeBaseImpl } from "../impl";
-import type { Corner, Side } from "../context";
-
-// ---------- //
-
-interface AnchorSign {
-    sx: number;
-    sy: number;
-}
-
-const MIN_NODE_SIZE = 10;
-
-const ANCHOR_SIGNS: Record<(Side | Corner), AnchorSign> = {
-    'top-left': { sx: 1, sy: 1 },
-    'top-right': { sx: -1, sy: 1 },
-    'bottom-left': { sx: 1, sy: -1 },
-    'bottom-right': { sx: -1, sy: -1 },
-    'top': { sx: 0, sy: 1 },
-    'bottom': { sx: 0, sy: -1 },
-    'left': { sx: 1, sy: 0 },
-    'right': { sx: -1, sy: 0 },
-};
+import { ANCHOR_SIGNS, MIN_NODE_SIZE } from "../constants";
+import type { Corner, Side } from "../types";
 
 // ---------- //
 
 interface CanvasNodeResizeState {
-    isDragging: boolean;
+    isActive: boolean;
+    hasMoved: boolean;
     position: (Side | Corner) | null;
     startMouseX: number;
     startMouseY: number;
@@ -53,12 +35,13 @@ interface UseCanvasNodeResizeResult {
 // ---------- //
 
 export function useCanvasNodeResize(): UseCanvasNodeResizeResult {
-    const { id, x, y, width, height, rotation } = useStrictContext(CanvasNodeBaseImpl.Context);
+    const { id, x, y, width, height, rotation, setIsDragging } = useStrictContext(CanvasNodeBaseImpl.Context);
     const { cameraState } = useStrictContext(UniverseContext);
     const { updateNode } = useStrictContext(RootContext);
 
     const dragRef = useRef<CanvasNodeResizeState>({
-        isDragging: false,
+        isActive: false,
+        hasMoved: false,
         position: null,
         startMouseX: 0,
         startMouseY: 0,
@@ -75,7 +58,12 @@ export function useCanvasNodeResize(): UseCanvasNodeResizeResult {
         event: 'mousemove',
         handler: (e: MouseEvent) => {
             const drag = dragRef.current;
-            if (!drag.isDragging || !drag.position) return;
+            if (!drag.isActive || !drag.position) return;
+
+            if (!drag.hasMoved) {
+                drag.hasMoved = true;
+                setIsDragging(true);
+            }
 
             const sceneDeltaX = (e.clientX - drag.startMouseX) / cameraState.zoom;
             const sceneDeltaY = (e.clientY - drag.startMouseY) / cameraState.zoom;
@@ -119,8 +107,14 @@ export function useCanvasNodeResize(): UseCanvasNodeResizeResult {
     useEventListener({
         event: 'mouseup',
         handler: () => {
-            dragRef.current.isDragging = false;
-            dragRef.current.position = null;
+            const drag = dragRef.current;
+            if (!drag.isActive) return;
+            drag.isActive = false;
+            drag.position = null;
+            if (drag.hasMoved) {
+                drag.hasMoved = false;
+                setIsDragging(false);
+            }
         },
     });
 
@@ -128,6 +122,7 @@ export function useCanvasNodeResize(): UseCanvasNodeResizeResult {
     const handleCanvasNodeResize = useCallback((position: (Side | Corner)) => {
         return (e: React.MouseEvent<HTMLElement>) => {
             e.stopPropagation();
+            e.preventDefault();
 
             const rad = rotation * (Math.PI / 180);
             const cos = Math.cos(rad);
@@ -141,7 +136,8 @@ export function useCanvasNodeResize(): UseCanvasNodeResizeResult {
             const anchorLocalY = sy * height / 2;
 
             dragRef.current = {
-                isDragging: true,
+                isActive: true,
+                hasMoved: false,
                 position,
                 startMouseX: e.clientX,
                 startMouseY: e.clientY,
